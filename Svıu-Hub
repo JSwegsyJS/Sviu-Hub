@@ -1,0 +1,319 @@
+local GameTSB = 10449761463
+local Game1v1 = 12360882630
+local GameKJ = 130818724007978
+local currentGameID = game.PlaceId
+if currentGameID == GameTSB or currentGameID == Game1v1 or currentGameID== GameKJ then
+
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local workspace = game:GetService("Workspace")
+
+local function createSafetyBlock()
+    local block = Instance.new("Part")
+    block.Size = Vector3.new(10000000, 1, 10000000) -- Blok boyutunu geniş yaparak boşluğu kaplasın
+    block.Anchored = true
+    block.CanCollide = true
+    block.Transparency = 0.7 -- %30 saydamlık
+    block.BrickColor = BrickColor.new("Institutional black") -- Cam gibi görünüme sahip
+
+    -- Blok pozisyonunu dünyanın altındaki boşluğun hemen üstüne ayarla
+    local yPosition = workspace.FallenPartsDestroyHeight + 10 -- Bloklar boşluğun biraz üstünde olacak şekilde
+
+    block.Position = Vector3.new(character.PrimaryPart.Position.X, yPosition, character.PrimaryPart.Position.Z)
+    block.Parent = workspace
+
+end
+
+-- Script çalıştığında blokları oluştur
+createSafetyBlock()
+
+-- Karakter yeniden doğduğunda blokları yeniden oluştur
+player.CharacterAdded:Connect(function(char)
+    character = char
+    createSafetyBlock()
+end)
+
+
+-- Script çalıştığında blokları oluştur
+createSafetyBlock()
+
+-- Karakter yeniden doğduğunda blokları yeniden oluştur
+player.CharacterAdded:Connect(function(char)
+    character = char
+    createSafetyBlock()
+end)
+
+
+local DrRayLibrary = loadstring(game:HttpGet("https://raw.githubusercontent.com/AZYsGithub/DrRay-UI-Library/main/DrRay.lua"))()
+local window = DrRayLibrary:Load("Svıu-Hub-TSB", "Default")
+
+
+game:GetService("CoreGui").DrRay.TopBar.BackgroundColor3 = Color3.new(0,0,0);
+game:GetService("CoreGui").DrRay.MainBar.BackgroundColor3 = Color3.new(0,0,0);
+game:GetService("CoreGui").DrRay.TopBar.TopBar.BackgroundColor3 = Color3.new(0,0,0);
+game:GetService("CoreGui").DrRay.TopBar.ProfileMenu.Clock.BackgroundTransparency = 0.50;
+game:GetService("CoreGui").DrRay.TopBar.ProfileMenu.PlayerProfile.BackgroundTransparency = 0.50;
+game:GetService("CoreGui").DrRay.TopBar.ProfileMenu.Title.BackgroundTransparency = 0.50;
+game:GetService("CoreGui").DrRay.TopBar.TopBarClose.BackgroundTransparency = 0.55;
+game:GetService("CoreGui").DrRay.TopBar.TopBarClose.idk.Visible = false;
+
+local tabMain = DrRayLibrary.newTab("Home")
+
+tabMain.newLabel("İlk Script İlk Hub")
+
+tabMain.newButton("Discord", "Get Discord Server Link ", function()
+
+local function copyTextToClipboard(text)
+    local success, message = pcall(function()
+        setclipboard(text)
+    end)
+    if not success then
+        warn("" .. message)
+    end
+end
+
+copyTextToClipboard("https://discord.gg/AggJtPm5pv")
+end)
+
+local UIS = game:GetService("UserInputService")
+local toggleState = false -- Başlangıçta kapalı
+
+-- Toggle işlevi hem GUI hem de V tuşu için ortak olacak
+local function toggleWalkSpeed(state)
+    toggleState = state
+    getgenv().WalkspeedBypass = toggleState
+    if toggleState then
+        task.spawn(function()
+            while getgenv().WalkspeedBypass == true and game:GetService("Players").LocalPlayer do
+                pcall(function()
+                    local chr = game:GetService("Players").LocalPlayer.Character
+                    if chr then
+                       local hum = chr:FindFirstChildWhichIsA("Humanoid");
+                        if hum and hum.Parent then
+                            local hb = game:GetService("RunService").Heartbeat
+                            local delta = hb:Wait()
+                            if hum.MoveDirection.Magnitude > 0 then
+                                chr:TranslateBy(hum.MoveDirection * 9 * delta * 7);
+                            else
+                                chr:TranslateBy(hum.MoveDirection * delta * 7);
+                            end
+                        end
+                    end
+                end)
+                task.wait(0.0015);
+            end
+        end)
+    end
+end
+
+-- GUI Toggle
+tabMain.newToggle("Speed","On/Off With V",false,function(Value)
+    toggleWalkSpeed(Value)
+end)
+
+-- V tuşu ile toggle işlemi
+UIS.InputBegan:Connect(function(input, gameProcessedEvent)
+    if input.KeyCode == Enum.KeyCode.V and not gameProcessedEvent then
+        toggleWalkSpeed(not toggleState) -- Mevcut durumu tersine çevir
+    end
+end)
+
+tabMain.newToggle("NoStun","Disables All Stuns",false,function(Value)
+    getgenv().AutoNoSlow = Value
+
+    task.spawn(function()
+        local connection
+        connection = game:GetService("RunService").RenderStepped:Connect(function()
+            if getgenv().AutoNoSlow == true then
+                pcall(function()
+                    game.Players.LocalPlayer.Character.Humanoid.WalkSpeed = 25
+                end)
+            else
+                connection:Disconnect()
+            end
+        end)
+    end)
+end)
+
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local Mouse = game.Players.LocalPlayer:GetMouse()
+local CamlockState = false
+local Prediction = 0.16
+local HorizontalPrediction = 0.17
+local VerticalPrediction = 0.14
+local XPrediction = 8.381
+local YPrediction = 7.282
+local Players = game:GetService("Players")	
+local LP = Players.LocalPlayer	
+local Mouse = LP:GetMouse()	
+local Locked = true
+getgenv().Key = "c"
+
+function FindNearestEnemy()
+    local ClosestDistance, ClosestPlayer = math.huge, nil
+    local CenterPosition =
+        Vector2.new(
+        game:GetService("GuiService"):GetScreenResolution().X / 2,
+        game:GetService("GuiService"):GetScreenResolution().Y / 2
+    )
+    for _, Player in ipairs(game:GetService("Players"):GetPlayers()) do
+        if Player ~= LocalPlayer then
+            local Character = Player.Character
+            if Character and Character:FindFirstChild("HumanoidRootPart") and Character.Humanoid.Health > 0 then
+                local Position, IsVisibleOnViewport =
+                    game:GetService("Workspace").CurrentCamera:WorldToViewportPoint(Character.HumanoidRootPart.Position)
+                if IsVisibleOnViewport then
+                    local Distance = (CenterPosition - Vector2.new(Position.X, Position.Y)).Magnitude
+                    if Distance < ClosestDistance then
+                        ClosestPlayer = Character.HumanoidRootPart
+                        ClosestDistance = Distance
+                    end
+                end
+            end
+        end
+    end
+    return ClosestPlayer
+end
+
+local enemy = nil
+
+-- Kamera hedefleme fonksiyonu
+RunService.Heartbeat:Connect(function()
+    if CamlockState == true then
+        if enemy then
+            local camera = workspace.CurrentCamera
+            camera.CFrame = CFrame.new(camera.CFrame.p, enemy.Position + enemy.Velocity * Prediction)
+        end
+    end
+end)
+
+Mouse.KeyDown:Connect(function(k)	
+    if k == getgenv().Key then	
+        Locked = not Locked	
+        if Locked then	
+            enemy = FindNearestEnemy()
+            CamlockState = true
+        else	
+            if enemy ~= nil then	
+                enemy = nil	
+                CamlockState = false
+            end	
+        end	
+    end	
+end)
+
+-- Toggle fonksiyonu
+tabMain.newToggle("Toggle AimBot", "You Can Off/On With C Key", false, function(toggleState)
+    if toggleState then
+        print("On")
+        CamlockState = true
+        enemy = FindNearestEnemy()
+    else
+        print("Off")
+        CamlockState = false
+        enemy = nil
+    end
+end)
+
+
+tabMain.newToggle("Esp Death Counter", "Esp DC", false, function(Value)
+    getgenv().EspDeathCounter = Value
+
+    if Value then
+        -- ESP fonksiyonu
+        local function espPlayer(player)
+            if player ~= game.Players.LocalPlayer then
+                local billboardGui = Instance.new("BillboardGui")
+                billboardGui.Name = "Esp"
+                billboardGui.Adornee = player.Character.Head
+                billboardGui.Size = UDim2.new(2, 0, 1, 0)
+                billboardGui.StudsOffset = Vector3.new(0, 2, 0)
+                billboardGui.AlwaysOnTop = true
+
+                local textLabel = Instance.new("TextLabel")
+                textLabel.Text = "Mal"
+                textLabel.Size = UDim2.new(1, 0, 1, 0)
+                textLabel.BackgroundTransparency = 1
+                textLabel.TextColor3 = Color3.fromRGB(255, 0, 0)
+                textLabel.TextScaled = true
+                textLabel.Parent = billboardGui
+
+                billboardGui.Parent = player.Character.Head
+            end
+        end
+
+        -- Death Counter yeteneğini kullananları kontrol et
+        game:GetService("RunService").RenderStepped:Connect(function()
+            for _, player in ipairs(game.Players:GetPlayers()) do
+                if player.Character and player.Character:FindFirstChild("Humanoid") then
+                    local humanoid = player.Character.Humanoid
+                    if humanoid:FindFirstChild("Animator") then
+                        local animator = humanoid.Animator
+                        for _, track in ipairs(animator:GetPlayingAnimationTracks()) do
+                            if track.Name == "Death Counter" and getgenv().EspDeathCounter then
+                                espPlayer(player)
+                                -- Animation bitince ESP'yi kaldır
+                                track.Stopped:Connect(function()
+                                    if player.Character and player.Character:FindFirstChild("Head") then
+                                        local head = player.Character.Head
+                                        local esp = head:FindFirstChild("Esp")
+                                        if esp then
+                                            esp:Destroy()
+                                        end
+                                    end
+                                end)
+                            end
+                        end
+                    end
+                end
+            end
+        end)
+
+    else
+        -- ESP'yi devre dışı bırakma
+        for _, player in ipairs(game.Players:GetPlayers()) do
+            if player.Character then
+                local head = player.Character:FindFirstChild("Head")
+                if head then
+                    local esp = head:FindFirstChild("Esp")
+                    if esp then
+                        esp:Destroy()
+                    end
+                end
+            end
+        end
+    end
+end)
+
+
+tabMain.newToggle("Jerkoff", "Jerkoff BABYYYYY!!!", false, function(Value)
+    if Value then
+        getgenv().JerkoffActive = true
+        loadstring(game:HttpGet("https://pastefy.app/LcC6ZrhN/raw"))()
+    else
+        getgenv().JerkoffActive = false
+    end
+end)
+
+game.Players.LocalPlayer.CharacterAdded:Connect(function(character)
+    character:WaitForChild("Humanoid").Died:Connect(function()
+        if getgenv().JerkoffActive then
+            getgenv().JerkoffActive = false
+            -- Burada scripti durdurmak için gerekli işlemleri yapabilirsiniz.
+        end
+    end)
+end)
+
+local tabMain = DrRayLibrary.newTab("Settings")
+
+else
+    local CoreGui = game:GetService("StarterGui")
+    CoreGui:SetCore("SendNotification", {
+        Title = "Svıu-Hub",
+        Text = "Please Use The Script In Tsb",
+        Duration = 10,
+        Callback = AllowRunServiceBind,
+    })
+end
